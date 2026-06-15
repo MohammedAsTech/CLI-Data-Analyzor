@@ -1,5 +1,19 @@
+from commands import CommandHandler
+from store import TransactionStore
+
+
 def main():
-    commands = []
-    while input() != "exit" and input() != "quit" :
-        if input() not in commands:
-            print("Unknown command")
+    store = TransactionStore()
+    handler = CommandHandler(store)
+
+    while True:
+        command = input("> ").strip()
+
+        if command == "exit":
+            break
+
+        handler.handle(command)
+
+
+if __name__ == "__main__":
+    main()
