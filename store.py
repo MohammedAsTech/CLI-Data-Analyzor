@@ -30,7 +30,6 @@ class TransactionStore:
                     row["description"],
                     int(row["id"])
                 )
-
                 self.transactions.append(transaction)
 
     def save(self):
