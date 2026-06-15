@@ -2,16 +2,24 @@ from datetime import date
 
 from transaction import Transaction
 
+
 GREEN = "\033[92m"
 RED = "\033[91m"
 RESET = "\033[0m"
 
 
 class CommandHandler:
-    def __init__(self, store,analyzer,budget_manager):
+    def __init__(
+        self,
+        store,
+        analyzer,
+        budget_manager,
+        chart_generator
+    ):
         self.store = store
         self.analyzer = analyzer
         self.budget_manager = budget_manager
+        self.chart_generator = chart_generator
 
     def handle(self, command):
         parts = command.split()
@@ -24,11 +32,15 @@ class CommandHandler:
 
         elif parts[0] == "list":
             self.handle_list(parts)
+
         elif parts[0] == "budget":
             self.handle_budget(parts)
 
         elif parts[0] == "summary":
             self.handle_summary()
+
+        elif parts[0] == "chart":
+            self.handle_chart(parts)
 
         else:
             print("Unknown command")
@@ -93,22 +105,16 @@ class CommandHandler:
             )
 
     def handle_budget(self, parts):
-
         if len(parts) != 3:
             print("Usage: budget <category> <limit>")
-
             return
 
         category = parts[1]
 
         try:
-
             limit = float(parts[2])
-
         except ValueError:
-
             print("Budget must be numeric")
-
             return
 
         self.budget_manager.set_budget(category, limit)
@@ -126,7 +132,6 @@ class CommandHandler:
         print()
 
         for category, spent in summary["expenses_by_category"].items():
-
             limit = self.budget_manager.get_budget(category)
 
             if limit is None:
@@ -138,15 +143,20 @@ class CommandHandler:
             if remaining >= 0:
                 color = GREEN
                 status = "under budget"
+                amount_text = f"{remaining:.2f} remaining"
             else:
                 color = RED
                 status = "over budget"
+                amount_text = f"{abs(remaining):.2f} over"
 
             print(
                 f"{color}"
                 f"{category}: {spent:.2f} / {limit:.2f} NIS "
-                f"({abs(remaining):.2f} "
-                f"{'remaining' if remaining >= 0 else 'over'}) "
+                f"({amount_text}) "
                 f"[{status}]"
                 f"{RESET}"
             )
+
+    def handle_chart(self, parts):
+        month = parts[1] if len(parts) > 1 else None
+        self.chart_generator.bar_chart(month)
