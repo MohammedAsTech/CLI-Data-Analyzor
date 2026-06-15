@@ -22,12 +22,13 @@ class TransactionStore:
 
             for row in reader:
                 transaction = Transaction(
-                    int(row["id"]),
+
                     row["type"],
                     float(row["amount"]),
                     row["category"],
                     row["date"],
-                    row["description"]
+                    row["description"],
+                    int(row["id"])
                 )
 
                 self.transactions.append(transaction)

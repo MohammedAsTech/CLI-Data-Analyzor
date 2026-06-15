@@ -1,5 +1,5 @@
 class Transaction:
-    def __init__(self,id,type,amount,category,date,description ):
+    def __init__(self,type,amount,category,date,description,id = None):
         if type != "income" and type != "expense":
             raise ValueError("Type must be 'income' or 'expense'")
         if amount <= 0:
