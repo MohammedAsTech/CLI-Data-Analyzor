@@ -1,14 +1,22 @@
 import csv
+import os
 
 from transaction import Transaction
 
 
 class TransactionStore:
-    def __init__(self,filepath = "transactions.csv"):
+    def __init__(self, filepath="transactions.csv"):
         self.transactions = []
         self.filepath = filepath
+        self.load()
 
     def load(self):
+        self.transactions.clear()
+
+        if not os.path.exists(self.filepath):
+            self.save()
+            return
+
         with open(self.filepath, newline="") as csvfile:
             reader = csv.DictReader(csvfile, delimiter="|")
 
@@ -46,4 +54,24 @@ class TransactionStore:
             for transaction in self.transactions:
                 writer.writerow(transaction.to_dict())
 
+    def add(self, transaction):
+        if transaction.id is None:
+            transaction.id = self.next_id()
 
+        self.transactions.append(transaction)
+        self.save()
+
+    def delete(self, id):
+        for transaction in self.transactions:
+            if transaction.id == id:
+                self.transactions.remove(transaction)
+                self.save()
+                return True
+
+        return False
+
+    def next_id(self):
+        if not self.transactions:
+            return 1
+
+        return max(transaction.id for transaction in self.transactions) + 1
