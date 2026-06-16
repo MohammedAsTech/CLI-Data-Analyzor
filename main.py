@@ -1,18 +1,39 @@
+import sys
+
+from analyzer import Analyzer
+from budget import BudgetManager
+from chart import ChartGenerator
 from commands import CommandHandler
 from store import TransactionStore
 
 
 def main():
+    use_color = "--no-color" not in sys.argv
+
     store = TransactionStore()
-    handler = CommandHandler(store)
+    analyzer = Analyzer(store)
+    budget_manager = BudgetManager()
+    chart_generator = ChartGenerator(analyzer)
 
-    while True:
-        command = input("> ").strip()
+    handler = CommandHandler(
+        store,
+        analyzer,
+        budget_manager,
+        chart_generator,
+        use_color
+    )
 
-        if command == "exit":
-            break
+    try:
+        while True:
+            command = input("> ").strip()
 
-        handler.handle(command)
+            if command == "exit":
+                break
+
+            handler.handle(command)
+
+    except KeyboardInterrupt:
+        print("\nGoodbye!")
 
 
 if __name__ == "__main__":

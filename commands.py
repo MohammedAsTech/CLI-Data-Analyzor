@@ -14,45 +14,52 @@ class CommandHandler:
         store,
         analyzer,
         budget_manager,
-        chart_generator
+        chart_generator,
+        use_color=True
     ):
         self.store = store
         self.analyzer = analyzer
         self.budget_manager = budget_manager
         self.chart_generator = chart_generator
+        self.use_color = use_color
 
     def handle(self, command):
-        parts = command.split()
+        try:
+            parts = command.split()
 
-        if not parts:
-            return
+            if not parts:
+                return
 
-        if parts[0] == "add":
-            self.handle_add(parts)
+            if parts[0] == "add":
+                self.handle_add(parts)
 
-        elif parts[0] == "list":
-            self.handle_list(parts)
+            elif parts[0] == "list":
+                self.handle_list(parts)
 
-        elif parts[0] == "budget":
-            self.handle_budget(parts)
+            elif parts[0] == "budget":
+                self.handle_budget(parts)
 
-        elif parts[0] == "summary":
-            self.handle_summary()
+            elif parts[0] == "summary":
+                self.handle_summary()
 
-        elif parts[0] == "chart":
-            self.handle_chart(parts)
-        elif parts[0] == "delete":
-            self.handle_delete(parts)
+            elif parts[0] == "chart":
+                self.handle_chart(parts)
 
-        elif parts[0] == "export":
-            self.handle_export(parts)
+            elif parts[0] == "delete":
+                self.handle_delete(parts)
 
-        else:
-            print("Unknown command")
+            elif parts[0] == "export":
+                self.handle_export(parts)
+
+            else:
+                print("Unknown command")
+
+        except Exception as error:
+            print(f"Error: {error}")
 
     def handle_add(self, parts):
         if len(parts) < 4:
-            print("Usage: add <income/expense> <amount> <category> <description>")
+            print("Usage: add <income/expense> <amount> <category> <description> [--date YYYY-MM-DD]")
             return
 
         tx_type = parts[1]
@@ -60,33 +67,41 @@ class CommandHandler:
         try:
             amount = float(parts[2])
         except ValueError:
-            print("Amount must be a number")
+            print("Error: amount must be a positive number")
             return
 
         category = parts[3]
-        description = " ".join(parts[4:])
+        tx_date = date.today().isoformat()
 
-        try:
-            transaction = Transaction(
-                tx_type,
-                amount,
-                category,
-                date.today().isoformat(),
-                description
-            )
+        if "--date" in parts:
+            index = parts.index("--date")
 
-            self.store.add(transaction)
+            if index + 1 >= len(parts):
+                print("Error: --date requires YYYY-MM-DD")
+                return
 
-            signed_amount = amount if tx_type == "income" else -amount
+            tx_date = parts[index + 1]
+            description = " ".join(parts[4:index])
+        else:
+            description = " ".join(parts[4:])
 
-            print(
-                f"Added: {signed_amount:.2f} NIS | "
-                f"{category} | "
-                f"{transaction.date}"
-            )
+        transaction = Transaction(
+            tx_type,
+            amount,
+            category,
+            tx_date,
+            description
+        )
 
-        except ValueError as error:
-            print(error)
+        self.store.add(transaction)
+
+        signed_amount = amount if tx_type == "income" else -amount
+
+        print(
+            f"Added: {signed_amount:.2f} NIS | "
+            f"{category} | "
+            f"{transaction.date}"
+        )
 
     def handle_list(self, parts):
         category = parts[1] if len(parts) > 1 else None
@@ -122,6 +137,10 @@ class CommandHandler:
             print("Budget must be numeric")
             return
 
+        if limit <= 0:
+            print("Budget must be positive")
+            return
+
         self.budget_manager.set_budget(category, limit)
 
         print(f"Budget set: {category} -> {limit:.2f} NIS")
@@ -154,12 +173,18 @@ class CommandHandler:
                 status = "over budget"
                 amount_text = f"{abs(remaining):.2f} over"
 
+            if not self.use_color:
+                color = ""
+                reset = ""
+            else:
+                reset = RESET
+
             print(
                 f"{color}"
                 f"{category}: {spent:.2f} / {limit:.2f} NIS "
                 f"({amount_text}) "
                 f"[{status}]"
-                f"{RESET}"
+                f"{reset}"
             )
 
     def handle_chart(self, parts):

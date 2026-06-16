@@ -17,20 +17,16 @@ class TransactionStore:
             self.save()
             return
 
-        with open(self.filepath, newline="") as csvfile:
-            reader = csv.DictReader(csvfile, delimiter="|")
+        try:
+            with open(self.filepath, newline="") as csvfile:
+                reader = csv.DictReader(csvfile, delimiter="|")
 
-            for row in reader:
-                transaction = Transaction(
+                for row in reader:
+                    self.transactions.append(Transaction.from_dict(row))
 
-                    row["type"],
-                    float(row["amount"]),
-                    row["category"],
-                    row["date"],
-                    row["description"],
-                    int(row["id"])
-                )
-                self.transactions.append(transaction)
+        except Exception:
+            print("Warning: transactions.csv is corrupted. Starting with an empty store.")
+            self.transactions.clear()
 
     def save(self):
         with open(self.filepath, "w", newline="") as csvfile:
@@ -76,15 +72,44 @@ class TransactionStore:
 
         return max(transaction.id for transaction in self.transactions) + 1
 
+    def list_transactions(self, category=None):
+        transactions = self.transactions
+
+        if category is not None:
+            transactions = [
+                transaction for transaction in transactions
+                if transaction.category.lower() == category.lower()
+            ]
+
+        return sorted(
+            transactions,
+            key=lambda transaction: transaction.date,
+            reverse=True
+        )
+
+    def filter(self, month=None, category=None):
+        transactions = self.transactions
+
+        if month is not None:
+            transactions = [
+                transaction for transaction in transactions
+                if transaction.date.startswith(month)
+            ]
+
+        if category is not None:
+            transactions = [
+                transaction for transaction in transactions
+                if transaction.category.lower() == category.lower()
+            ]
+
+        return transactions
+
     def export(self, month=None):
         if month is None:
             transactions = self.transactions
             filename = "export_all.csv"
         else:
-            transactions = [
-                transaction for transaction in self.transactions
-                if transaction.date.startswith(month)
-            ]
+            transactions = self.filter(month=month)
             filename = f"export_{month}.csv"
 
         with open(filename, "w", newline="") as csvfile:
