@@ -75,3 +75,37 @@ class TransactionStore:
             return 1
 
         return max(transaction.id for transaction in self.transactions) + 1
+
+    def export(self, month=None):
+        if month is None:
+            transactions = self.transactions
+            filename = "export_all.csv"
+        else:
+            transactions = [
+                transaction for transaction in self.transactions
+                if transaction.date.startswith(month)
+            ]
+            filename = f"export_{month}.csv"
+
+        with open(filename, "w", newline="") as csvfile:
+            fieldnames = [
+                "id",
+                "type",
+                "amount",
+                "category",
+                "date",
+                "description"
+            ]
+
+            writer = csv.DictWriter(
+                csvfile,
+                fieldnames=fieldnames,
+                delimiter="|"
+            )
+
+            writer.writeheader()
+
+            for transaction in transactions:
+                writer.writerow(transaction.to_dict())
+
+        return filename, len(transactions)

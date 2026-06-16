@@ -41,6 +41,11 @@ class CommandHandler:
 
         elif parts[0] == "chart":
             self.handle_chart(parts)
+        elif parts[0] == "delete":
+            self.handle_delete(parts)
+
+        elif parts[0] == "export":
+            self.handle_export(parts)
 
         else:
             print("Unknown command")
@@ -160,3 +165,28 @@ class CommandHandler:
     def handle_chart(self, parts):
         month = parts[1] if len(parts) > 1 else None
         self.chart_generator.bar_chart(month)
+
+    def handle_delete(self, parts):
+        if len(parts) != 2:
+            print("Usage: delete <id>")
+            return
+
+        try:
+            transaction_id = int(parts[1])
+        except ValueError:
+            print("ID must be a number")
+            return
+
+        deleted = self.store.delete(transaction_id)
+
+        if deleted:
+            print(f"Deleted transaction #{transaction_id}.")
+        else:
+            print(f"Transaction #{transaction_id} does not exist.")
+
+    def handle_export(self, parts):
+        month = parts[1] if len(parts) > 1 else None
+
+        filename, count = self.store.export(month)
+
+        print(f"Exported {count} transactions to {filename}.")
