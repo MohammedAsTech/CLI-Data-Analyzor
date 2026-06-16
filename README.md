@@ -183,7 +183,4 @@ Each bug has a corresponding regression test that would have caught it before sh
 - **Bug discovery methodology** — static analysis + regression tests + integration invariants
 
 ---
-
-## License
-
-MIT
+ 
